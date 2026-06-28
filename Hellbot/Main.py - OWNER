@@ -17,9 +17,16 @@ HELLBOT_SESSION = os.environ.get("HELLBOT_SESSION")
 HANDLER = os.environ.get("HANDLER", ".")
 ABUSE = os.environ.get("ABUSE", "OFF").upper()
 OWNER_NAME = os.environ.get("OWNER_NAME", "OWNER")
+OWNER_ID = int(os.environ.get("OWNER_ID", "0")) # NAYA - Tera Telegram ID
 
 client = TelegramClient(StringSession(HELLBOT_SESSION), APP_ID, API_HASH)
 StartTime = time.time()
+
+# Owner mention helper
+def OWNER_LINK():
+    if OWNER_ID!= 0:
+        return f"[{OWNER_NAME}](tg://user?id={OWNER_ID})"
+    return f"**{OWNER_NAME}**"
 
 # Shayari Database
 SHAYARI_LIST = [
@@ -72,7 +79,7 @@ def get_readable_time(seconds: int) -> str:
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}alive", outgoing=True))
 async def alive(event):
     uptime = get_readable_time(int(time.time() - StartTime))
-    await event.edit(f"**🔥 HellBot Userbot V5 🔥**\n\n**Owner:** `{OWNER_NAME}`\n**Version:** 5.0\n**Uptime:** `{uptime}`\n**Handler:** `{HANDLER}`\n**Abuse:** `{ABUSE}`\n**Commands:** 28+")
+    await event.edit(f"**🔥 HellBot Userbot V6 🔥**\n\n**Owner:** {OWNER_LINK()}\n**Version:** 6.0\n**Uptime:** `{uptime}`\n**Handler:** `{HANDLER}`\n**Abuse:** `{ABUSE}`")
 
 # 2. PING
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}ping", outgoing=True))
@@ -81,7 +88,7 @@ async def ping(event):
     await event.edit("`Pong!`")
     end = datetime.now()
     ms = (end - start).microseconds / 1000
-    await event.edit(f"**🏓 Pong!**\n**Speed:** `{ms}ms`\n**Owner:** `{OWNER_NAME}`")
+    await event.edit(f"**🏓 Pong!**\n**Speed:** `{ms}ms`\n**Owner:** {OWNER_LINK()}")
 
 # 3. RESTART
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}restart", outgoing=True))
@@ -94,9 +101,9 @@ async def restart(event):
 async def id_cmd(event):
     reply = await event.get_reply_message()
     if reply:
-        await event.edit(f"**User ID:** `{reply.sender_id}`\n**Chat ID:** `{event.chat_id}`")
+        await event.edit(f"**User ID:** `{reply.sender_id}`\n**Chat ID:** `{event.chat_id}`\n**Your ID:** `{OWNER_ID}`")
     else:
-        await event.edit(f"**Your ID:** `{event.sender_id}`\n**Chat ID:** `{event.chat_id}`")
+        await event.edit(f"**Your ID:** `{OWNER_ID}`\n**Chat ID:** `{event.chat_id}`")
 
 # 5. INFO
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}info", outgoing=True))
@@ -111,12 +118,9 @@ async def yt_download(event):
     url = event.pattern_match.group(1)
     await event.edit("`Downloading...`")
     try:
-        proc = await asyncio.create_subprocess_shell(
-            f'yt-dlp -f "best[ext=mp4]" -o "video.mp4" {url}',
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
+        proc = await asyncio.create_subprocess_shell(f'yt-dlp -f "best[ext=mp4]" -o "video.mp4" {url}')
         await proc.communicate()
-        await client.send_file(event.chat_id, "video.mp4", caption=f"**Downloaded by {OWNER_NAME}**")
+        await client.send_file(event.chat_id, "video.mp4", caption=f"**Downloaded by {OWNER_LINK()}**")
         os.remove("video.mp4")
         await event.delete()
     except Exception as e:
@@ -130,7 +134,7 @@ async def tiktok(event):
     try:
         proc = await asyncio.create_subprocess_shell(f'yt-dlp -f "mp4" -o "tiktok.mp4" {url}')
         await proc.communicate()
-        await client.send_file(event.chat_id, "tiktok.mp4", caption=f"**By {OWNER_NAME}**")
+        await client.send_file(event.chat_id, "tiktok.mp4", caption=f"**By {OWNER_LINK()}**")
         os.remove("tiktok.mp4")
         await event.delete()
     except: await event.edit("`Error`")
@@ -143,7 +147,7 @@ async def insta(event):
     try:
         proc = await asyncio.create_subprocess_shell(f'yt-dlp -o "insta.mp4" {url}')
         await proc.communicate()
-        await client.send_file(event.chat_id, "insta.mp4", caption=f"**By {OWNER_NAME}**")
+        await client.send_file(event.chat_id, "insta.mp4", caption=f"**By {OWNER_LINK()}**")
         os.remove("insta.mp4")
         await event.delete()
     except: await event.edit("`Error`")
@@ -160,7 +164,7 @@ async def sticker(event):
 # 10. SHAYARI
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}shayari", outgoing=True))
 async def shayari(event):
-    await event.edit(f"**✨ {OWNER_NAME} Ki Shayari ✨**\n\n{random.choice(SHAYARI_LIST)}")
+    await event.edit(f"**✨ {OWNER_LINK()} Ki Shayari ✨**\n\n{random.choice(SHAYARI_LIST)}")
 
 # 11. TAGALL
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}tagall(.*)", outgoing=True))
@@ -174,11 +178,11 @@ async def tagall(event):
         mentions.append(f"[{user.first_name}](tg://user?id={user.id})")
     chunk = [mentions[i:i+5] for i in range(0, len(mentions), 5)]
     for c in chunk:
-        await event.respond(f"**{OWNER_NAME}:** {text}\n\n{' '.join(c)}")
+        await event.respond(f"**{OWNER_LINK()}:** {text}\n\n{' '.join(c)}")
         await asyncio.sleep(2)
     await event.delete()
 
-# 12. AI CHAT
+# 12. AI CHAT - LINK WALA
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}ai (.*)", outgoing=True))
 async def ai_chat(event):
     query = event.pattern_match.group(1)
@@ -187,11 +191,11 @@ async def ai_chat(event):
         url = f"https://api.simsimi.net/v2/?text={query}&lc=hi"
         r = requests.get(url).json()
         if r.get("success"):
-            await event.edit(f"**👑 OWNER: {OWNER_NAME}**\n**❓ Question:** {query}\n**🤖 AI Reply:** {r['success']}")
+            await event.edit(f"**👑 OWNER: {OWNER_LINK()}**\n**❓ Question:** {query}\n**🤖 AI Reply:** {r['success']}")
         else:
-            await event.edit(f"**👑 OWNER: {OWNER_NAME}**\n`AI reply nahi mila`")
+            await event.edit(f"**👑 OWNER: {OWNER_LINK()}**\n`AI reply nahi mila`")
     except:
-        await event.edit(f"**👑 OWNER: {OWNER_NAME}**\n`AI error`")
+        await event.edit(f"**👑 OWNER: {OWNER_LINK()}**\n`AI error`")
 
 # 13. BAN
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}ban", outgoing=True))
@@ -199,7 +203,7 @@ async def ban(event):
     reply = await event.get_reply_message()
     if not reply: return await event.edit("`Reply to user`")
     await client.edit_permissions(event.chat_id, reply.sender_id, view_messages=False)
-    await event.edit(f"`{OWNER_NAME} ne ban kiya:` [{reply.sender.first_name}](tg://user?id={reply.sender_id})")
+    await event.edit(f"`{OWNER_LINK()} ne ban kiya:` [{reply.sender.first_name}](tg://user?id={reply.sender_id})")
 
 # 14. UNBAN
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}unban", outgoing=True))
@@ -207,7 +211,7 @@ async def unban(event):
     reply = await event.get_reply_message()
     if not reply: return await event.edit("`Reply to user`")
     await client.edit_permissions(event.chat_id, reply.sender_id, view_messages=True)
-    await event.edit(f"`{OWNER_NAME} ne unban kiya:` [{reply.sender.first_name}](tg://user?id={reply.sender_id})")
+    await event.edit(f"`{OWNER_LINK()} ne unban kiya:` [{reply.sender.first_name}](tg://user?id={reply.sender_id})")
 
 # 15. KICK
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}kick", outgoing=True))
@@ -215,7 +219,7 @@ async def kick(event):
     reply = await event.get_reply_message()
     if not reply: return await event.edit("`Reply to user`")
     await client.kick_participant(event.chat_id, reply.sender_id)
-    await event.edit(f"`{OWNER_NAME} ne kick kiya`")
+    await event.edit(f"`{OWNER_LINK()} ne kick kiya`")
 
 # 16. MUTE
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}mute", outgoing=True))
@@ -223,7 +227,7 @@ async def mute(event):
     reply = await event.get_reply_message()
     if not reply: return await event.edit("`Reply to user`")
     await client.edit_permissions(event.chat_id, reply.sender_id, send_messages=False)
-    await event.edit(f"`{OWNER_NAME} ne mute kiya`")
+    await event.edit(f"`{OWNER_LINK()} ne mute kiya`")
 
 # 17. UNMUTE
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}unmute", outgoing=True))
@@ -231,7 +235,7 @@ async def unmute(event):
     reply = await event.get_reply_message()
     if not reply: return await event.edit("`Reply to user`")
     await client.edit_permissions(event.chat_id, reply.sender_id, send_messages=True)
-    await event.edit(f"`{OWNER_NAME} ne unmute kiya`")
+    await event.edit(f"`{OWNER_LINK()} ne unmute kiya`")
 
 # 18. PURGE
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}purge", outgoing=True))
@@ -242,7 +246,7 @@ async def purge(event):
     async for msg in client.iter_messages(event.chat_id, min_id=reply.id, max_id=event.id):
         msgs.append(msg.id)
     await client.delete_messages(event.chat_id, msgs)
-    await event.respond(f"`{OWNER_NAME} ne {len(msgs)} messages purge kiye`", delete_in=3)
+    await event.respond(f"`{OWNER_LINK()} ne {len(msgs)} messages purge kiye`", delete_in=3)
 
 # 19. DEL
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}del", outgoing=True))
@@ -256,14 +260,14 @@ async def delete(event):
 async def sysinfo(event):
     cpu = psutil.cpu_percent()
     ram = psutil.virtual_memory().percent
-    await event.edit(f"**{OWNER_NAME}'s Bot Stats**\n**CPU:** `{cpu}%`\n**RAM:** `{ram}%`")
+    await event.edit(f"**{OWNER_LINK()}'s Bot Stats**\n**CPU:** `{cpu}%`\n**RAM:** `{ram}%`")
 
 # 21. GOOGLE
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}google (.*)", outgoing=True))
 async def google(event):
     query = event.pattern_match.group(1)
     url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
-    await event.edit(f"**{OWNER_NAME} searched:**\n[{query}]({url})")
+    await event.edit(f"**{OWNER_LINK()} searched:**\n[{query}]({url})")
 
 # 22. CALC
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}calc (.*)", outgoing=True))
@@ -271,7 +275,7 @@ async def calc(event):
     expr = event.pattern_match.group(1)
     try:
         result = eval(expr)
-        await event.edit(f"**{OWNER_NAME}'s Calc:** `{expr} = {result}`")
+        await event.edit(f"**{OWNER_LINK()}'s Calc:** `{expr} = {result}`")
     except: await event.edit("`Invalid`")
 
 # 23. WEATHER
@@ -280,7 +284,7 @@ async def weather(event):
     city = event.pattern_match.group(1)
     try:
         r = requests.get(f"https://wttr.in/{city}?format=3").text
-        await event.edit(f"**{OWNER_NAME} checked weather:** `{r}`")
+        await event.edit(f"**{OWNER_LINK()} checked weather:** `{r}`")
     except: await event.edit("`Error`")
 
 # ABUSE COMMANDS
@@ -292,7 +296,7 @@ if ABUSE == "ON":
         count, text = int(args[0]), args[1]
         await event.delete()
         for _ in range(count):
-            await event.respond(f"{OWNER_NAME}: {text}")
+            await event.respond(f"{OWNER_LINK()}: {text}")
             await asyncio.sleep(0.3)
 
     @client.on(events.NewMessage(pattern=f"\\{HANDLER}paste", outgoing=True))
@@ -303,14 +307,14 @@ if ABUSE == "ON":
         async with aiohttp.ClientSession() as session:
             async with session.post("https://nekobin.com/api/documents", json={"content": text}) as r:
                 res = await r.json()
-                await event.edit(f"**{OWNER_NAME} pasted:** https://nekobin.com/{res['result']['key']}")
+                await event.edit(f"**{OWNER_LINK()} pasted:** https://nekobin.com/{res['result']['key']}")
 
     @client.on(events.NewMessage(pattern=f"\\{HANDLER}eval (.*)", outgoing=True))
     async def evaluate(event):
         cmd = event.pattern_match.group(1)
         try:
             result = eval(cmd)
-            await event.edit(f"**{OWNER_NAME}'s Eval:** `{result}`")
+            await event.edit(f"**{OWNER_LINK()}'s Eval:** `{result}`")
         except Exception as e: await event.edit(f"**Error:** `{e}`")
 
     @client.on(events.NewMessage(pattern=f"\\{HANDLER}term (.*)", outgoing=True))
@@ -319,7 +323,7 @@ if ABUSE == "ON":
         proc = await asyncio.create_subprocess_shell(cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await proc.communicate()
         result = str(stdout.decode().strip()) + str(stderr.decode().strip())
-        await event.edit(f"**{OWNER_NAME}'s Terminal:**\n`{result}`")
+        await event.edit(f"**{OWNER_LINK()}'s Terminal:**\n`{result}`")
 
     @client.on(events.NewMessage(pattern=f"\\{HANDLER}loop (.*)", outgoing=True))
     async def loop_cmd(event):
@@ -328,14 +332,14 @@ if ABUSE == "ON":
         count, text = int(args[0]), args[1]
         await event.delete()
         for i in range(count):
-            await event.respond(f"{OWNER_NAME}: {i+1}. {text}")
+            await event.respond(f"{OWNER_LINK()}: {i+1}. {text}")
             await asyncio.sleep(1)
 
 # 28. HELP
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}help", outgoing=True))
 async def help_cmd(event):
     basic = f"""
-**🔥 HellBot V5 - {OWNER_NAME}'s Bot 🔥**
+**🔥 HellBot V6 - {OWNER_LINK()}'s Bot 🔥**
 
 **Fun:**
 `.shayari` - {OWNER_NAME} ki shayari
@@ -358,10 +362,10 @@ async def help_cmd(event):
 `.spam <count> <text>` `.loop <count> <text>`
 `.paste` `.eval <code>` `.term <cmd>`
 """ if ABUSE == "ON" else "\n**ABUSE=ON karo 5 extra commands ke liye**"
-    await event.edit(basic + abuse + f"\n**Owner:** `{OWNER_NAME}`\n**Handler:** `{HANDLER}`")
+    await event.edit(basic + abuse + f"\n**Owner:** {OWNER_LINK()}\n**Handler:** `{HANDLER}`")
 
 async def main():
-    print(f"HellBot Userbot V5 Starting... Owner: {OWNER_NAME}")
+    print(f"HellBot Userbot V6 Starting... Owner: {OWNER_NAME}")
     await client.start()
     print("Userbot Started Successfully!")
     await client.run_until_disconnected()
