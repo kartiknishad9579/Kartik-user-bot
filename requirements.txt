@@ -7,3 +7,4 @@ pillow==10.2.0
 gitpython==3.1.41
 psutil==5.9.8
 beautifulsoup4==4.12.3
+yt-dlp
