@@ -5,7 +5,6 @@ aiohttp==3.9.5
 yt-dlp
 pillow==10.2.0
 g4f==0.2.0.3
-instaloader==4.14
 beautifulsoup4==4.12.3
 googletrans==4.0.2
 qrcode==7.4.2
