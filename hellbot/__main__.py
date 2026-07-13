@@ -12,7 +12,6 @@ from telethon.sessions import StringSession
 from telethon.tl.functions.channels import EditAdminRequest
 from telethon.tl.types import ChatAdminRights
 import g4f
-import instaloader
 import yt_dlp
 from googletrans import Translator
 
@@ -25,7 +24,6 @@ OWNER_ID = int(os.environ.get("OWNER_ID", "0"))
 AI_GROUP_ON = os.environ.get("AI_GROUP_ON", "OFF").upper()
 
 client = TelegramClient(StringSession(HELLBOT_SESSION), APP_ID, API_HASH)
-L = instaloader.Instaloader()
 translator = Translator()
 chat_history = {}
 AFK = False
@@ -34,7 +32,7 @@ AFK_REASON = ""
 def OWNER_LINK(): 
     return f"[{OWNER_NAME}](tg://user?id={OWNER_ID})"
 
-print("HellBot V11 PRO Starting...")
+print("HellBot V11 STABLE Starting...")
 
 # ================================================
 # ================ 1. AI CHAT BOT ================
@@ -255,21 +253,6 @@ async def yt(event):
         os.remove("video.mp4")
     await event.delete()
 
-@client.on(events.NewMessage(pattern=f"\\{HANDLER}insta (.*)", outgoing=True))
-async def insta(event): 
-    url = event.pattern_match.group(1)
-    msg = await event.edit("`Downloading reel...`")
-    try:
-        shortcode = url.split("/")[-2]
-        post = instaloader.Post.from_shortcode(L.context, shortcode)
-        L.download_post(post, target="insta")
-        for file in os.listdir("insta"): 
-            await client.send_file(event.chat_id, f"insta/{file}")
-        os.system("rm -rf insta")
-        await msg.delete()
-    except Exception as e:
-        await msg.edit(f"`Error: {e}`")
-
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}tt (.*)", outgoing=True))
 async def tt(event): 
     url = event.pattern_match.group(1)
@@ -357,7 +340,7 @@ async def dare(event):
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}alive", outgoing=True))
 async def alive(event): 
     await event.edit(
-        f"**HellBot V11 PRO is Alive**\n"
+        f"**HellBot V11 STABLE is Alive**\n"
         f"**Owner:** {OWNER_LINK()}\n"
         f"**RAM:** {psutil.virtual_memory().percent}%"
     )
@@ -457,11 +440,11 @@ async def ai_toggle(event):
 
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}help", outgoing=True))
 async def help(event): 
-    txt = f"""**HellBot V11 PRO - 85+ Commands**
+    txt = f"""**HellBot V11 STABLE - 80+ Commands**
 
 **Admin:** `.ban .kick .mute .promote .purge .gban .zombies`
 **Tag:** `.tagall .user1 .invite .info .pfp .bio .common .id`
-**Download:** `.play .yt .insta .tt`
+**Download:** `.play .yt .tt`
 **Utils:** `.tr .google .wiki .weather .qr`
 **Fun:** `.shayari .joke .coin .dice .truth .dare`
 **Bot:** `.alive .ping .stats .afk .restart .broadcast .backup`
@@ -469,6 +452,6 @@ async def help(event):
 **Toggle:** `.aigroup on/off`"""
     await event.edit(txt)
 
-print("HellBot V11 PRO Started Successfully!")
+print("HellBot V11 STABLE Started Successfully!")
 client.start()
 client.run_until_disconnected()
