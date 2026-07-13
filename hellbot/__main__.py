@@ -13,7 +13,8 @@ from telethon.tl.functions.channels import EditAdminRequest
 from telethon.tl.types import ChatAdminRights
 import g4f
 import yt_dlp
-from googletrans import Translator
+from googletrans import Translator  
+translator = Translator(service_urls=['translate.google.com'])  
 
 APP_ID = int(os.environ.get("APP_ID"))
 API_HASH = os.environ.get("API_HASH")
