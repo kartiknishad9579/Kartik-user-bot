@@ -7,6 +7,6 @@ g4f
 beautifulsoup4==4.12.3
 googletrans==4.0.0-rc1
 qrcode==7.4.2
-wikipedia==1.4.2
+wikipedia
 pyjokes==0.6.0
 psutil==5.9.8
