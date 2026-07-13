@@ -19,14 +19,14 @@ ABUSE = os.environ.get("ABUSE", "OFF").upper()
 OWNER_NAME = os.environ.get("OWNER_NAME", "OWNER")
 OWNER_ID = int(os.environ.get("OWNER_ID", "0"))
 AUTO_REPLY_MSG = os.environ.get("AUTO_REPLY_MSG", f"**{OWNER_NAME} abhi busy hai**\n**Thodi der me reply dunga** 😊")
-WELCOME_MSG = os.environ.get("WELCOME_MSG", "**Welcome {name} to {chat}** 🔥\n**Members:** {count}") # NAYA
+WELCOME_MSG = os.environ.get("WELCOME_MSG", "**Welcome {name} to {chat}** 🔥\n**Total Members:** {count}")
 
 client = TelegramClient(StringSession(HELLBOT_SESSION), APP_ID, API_HASH)
 StartTime = time.time()
 PM_WARNS = {}
 
 def OWNER_LINK():
-    if OWNER_ID!= 0:
+    if OWNER_ID != 0:
         return f"[{OWNER_NAME}](tg://user?id={OWNER_ID})"
     return f"**{OWNER_NAME}**"
 
@@ -44,29 +44,25 @@ async def welcome(event):
     if event.user_joined or event.user_added:
         user = await event.get_user()
         chat = await event.get_chat()
-        name = user.first_name
+        name = user.first_name or "User"
         mention = f"[{name}](tg://user?id={user.id})"
         chat_name = chat.title
         count = await client.get_participants(chat, limit=0)
-        count = len(count)
         
-        msg = WELCOME_MSG.format(name=mention, chat=chat_name, owner=OWNER_LINK(), count=count)
+        msg = WELCOME_MSG.format(name=mention, chat=chat_name, owner=OWNER_LINK(), count=len(count))
         
-        # User ki DP download
-        user_photo = await client.download_profile_photo(user, file="user_dp.jpg")
-        # Group ki DP download
-        chat_photo = await client.download_profile_photo(chat, file="chat_dp.jpg")
-        
-        files_to_send = []
-        if user_photo: files_to_send.append(user_photo)
-        if chat_photo: files_to_send.append(chat_photo)
-        
-        if files_to_send:
-            await client.send_file(event.chat_id, files_to_send, caption=msg)
-            # file delete
-            if user_photo and os.path.exists(user_photo): os.remove(user_photo)
-            if chat_photo and os.path.exists(chat_photo): os.remove(chat_photo)
-        else:
+        try:
+            user_photo = await client.download_profile_photo(user, file="user_dp.jpg")
+            chat_photo = await client.download_profile_photo(chat, file="chat_dp.jpg")
+            files_to_send = [f for f in [user_photo, chat_photo] if f]
+            
+            if files_to_send:
+                await client.send_file(event.chat_id, files_to_send, caption=msg)
+                for f in files_to_send:
+                    if os.path.exists(f): os.remove(f)
+            else:
+                await client.send_message(event.chat_id, msg)
+        except:
             await client.send_message(event.chat_id, msg)
 
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}setwelcome (.*)", outgoing=True))
@@ -80,6 +76,7 @@ async def set_welcome(event):
 async def check_welcome(event):
     await event.edit(f"**Current Welcome Msg:**\n`{WELCOME_MSG}`\n\n**Vars:** `{{name}}` `{{chat}}` `{{owner}}` `{{count}}`")
 # ====== WELCOME END ======
+
 
 # ====== AUTO REPLY ======
 @client.on(events.NewMessage(incoming=True))
@@ -99,32 +96,44 @@ async def pmpermit_off(event):
         chat = await event.get_chat()
         if chat.id in PM_WARNS: del PM_WARNS[chat.id]
 
-# ====== MUSIC ======
+# ====== MUSIC - FIXED ======
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}play (.*)", outgoing=True))
 async def playmusic(event):
     query = event.pattern_match.group(1)
-    await event.edit(f"`🔍 Searching: {query}`")
+    msg = await event.edit(f"`🔍 Searching: {query}`")
     try:
-        proc = await asyncio.create_subprocess_shell(f'yt-dlp -x --audio-format mp3 -o "song.%(ext)s" "ytsearch:{query}"')
+        proc = await asyncio.create_subprocess_shell(
+            f'yt-dlp -x --audio-format mp3 -o "song.%(ext)s" --no-playlist "ytsearch1:{query}"')
         await proc.communicate()
-        await event.edit("`📤 Uploading song...`")
+        
+        if not os.path.exists("song.mp3"):
+            return await msg.edit("`❌ Song download nahi hua`\n`Check: ffmpeg + yt-dlp installed?`")
+            
+        await msg.edit("`📤 Uploading song...`")
         await client.send_file(event.chat_id, "song.mp3", caption=f"**🎵 Playing:** `{query}`", supports_streaming=True)
         os.remove("song.mp3")
         await event.delete()
-    except Exception as e: await event.edit(f"**Error:** `{e}`")
+    except Exception as e: 
+        await msg.edit(f"**Error:** `{e}`")
 
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}vplay (.*)", outgoing=True))
 async def playvideo(event):
     query = event.pattern_match.group(1)
-    await event.edit(f"`🔍 Searching: {query}`")
+    msg = await event.edit(f"`🔍 Searching: {query}`")
     try:
-        proc = await asyncio.create_subprocess_shell(f'yt-dlp -f "best[ext=mp4]" -o "video.mp4" "ytsearch:{query}"')
+        proc = await asyncio.create_subprocess_shell(
+            f'yt-dlp -f "best[ext=mp4]" -o "video.mp4" --no-playlist "ytsearch1:{query}"')
         await proc.communicate()
-        await event.edit("`📤 Uploading video...`")
+        
+        if not os.path.exists("video.mp4"):
+            return await msg.edit("`❌ Video download nahi hua`")
+            
+        await msg.edit("`📤 Uploading video...`")
         await client.send_file(event.chat_id, "video.mp4", caption=f"**🎬 Playing:** `{query}`", supports_streaming=True)
         os.remove("video.mp4")
         await event.delete()
-    except Exception as e: await event.edit(f"**Error:** `{e}`")
+    except Exception as e: 
+        await msg.edit(f"**Error:** `{e}`")
 
 # TAGALL
 @client.on(events.NewMessage(pattern=f"\\{HANDLER}tagall(.*)", outgoing=True))
@@ -167,17 +176,12 @@ async def help_cmd(event):
     basic = f"""
 **🔥 HellBot V6 - {OWNER_LINK()}'s Bot 🔥**
 
-**Group Welcome DP:**
-Jab koi join karega to uski DP + Group DP ke sath welcome
-
-**Commands:**
+**DP Welcome:** Join pe User DP + Group DP
 `.setwelcome <msg>` - Welcome msg set
 `.welcome` - Current msg dekho
 
-**Vars:** `{{name}}` `{{chat}}` `{{owner}}` `{{count}}`
-
-**Music:** `.play` `.vplay`
-**Tag:** `.tagall` `.all`
+**Music:** `.play <song>` `.vplay <video>`
+**Tag:** `.tagall <text>` `.all <text>`
 """
     await event.edit(basic)
 
